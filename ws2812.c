@@ -32,10 +32,10 @@
 
 // TODO: Add these #define's to the headers of your project.
 // May not work with other than this numbers. ws2812_init() should be updated.
-// Tested with STM32F4, working at 144(!)MHz.
-#define WS2812_LED_N		2
-#define WS2812_TIM_N		2
-#define WS2812_TIM_CH		1
+// Tested with STM32F4, working at 144 or 168 MHz.
+#define WS2812_LED_N    60
+#define WS2812_TIM_N    2
+#define WS2812_TIM_CH   1
 
 /* --- CONFIGURATION CHECK -------------------------------------------------- */
 
@@ -67,8 +67,8 @@
 
 /* --- PRIVATE CONSTANTS ---------------------------------------------------- */
 
-#define WS2812_PWM_FREQUENCY    (72000000)                                  /**< Clock frequency of PWM */
-#define WS2812_PWM_PERIOD       (90)                                        /**< Clock period in ticks. 90/(72 MHz) = 1.25 uS (as per datasheet) */
+#define WS2812_PWM_FREQUENCY    (STM32_SYSCLK/2)                /**< Clock frequency of PWM, must be valid with respect to system clock! */
+#define WS2812_PWM_PERIOD       (WS2812_PWM_FREQUENCY/800000)   /**< Clock period in ticks. 1 / 800kHz = 1.25 uS (as per datasheet) */
 
 /**
  * @brief   Number of bit-periods to hold the data line low at the end of a frame
@@ -85,27 +85,32 @@
  * @brief   High period for a zero, in ticks
  *
  * Per the datasheet:
- * - T0H: 0.200 uS to 0.500 uS, inclusive
- * - T0L: 0.650 uS to 0.950 uS, inclusive
+ * WS2812:
+ * - T0H: 200 nS to 500 nS, inclusive
+ * - T0L: 650 nS to 950 nS, inclusive
+ * WS2812B:
+ * - T0H: 200 nS to 500 nS, inclusive
+ * - T0L: 750 nS to 1050 nS, inclusive
  *
- * With a duty cycle of 22 ticks, we have a high period of 22/(72 MHz) = 3.06 uS, and
- * a low period of (90 - 22)/(72 MHz) = 9.44 uS. These values are within the allowable
- * bounds, and intentionally skewed as far to the low duty-cycle side as possible
+ * The duty cycle is calculated for a high period of 350 nS.
  */
-#define WS2812_DUTYCYCLE_0      (22)
+#define WS2812_DUTYCYCLE_0      (WS2812_PWM_FREQUENCY/(1000000000/350))
 
 /**
  * @brief   High period for a one, in ticks
  *
  * Per the datasheet:
- * - T0H: 0.550 uS to 0.850 uS, inclusive
- * - T0L: 0.450 uS to 0.750 uS, inclusive
+ * WS2812:
+ * - T0H: 550 nS to 850 nS, inclusive
+ * - T0L: 450 nS to 750 nS, inclusive
+ * WS2812B:
+ * - T0H: 750 nS to 1050 nS, inclusive
+ * - T0L: 200 nS to 500 nS, inclusive
  *
- * With a duty cycle of 56 ticks, we have a high period of 56/(72 MHz) = 7.68 uS, and
- * a low period of (90 - 56)/(72 MHz) = 4.72 uS. These values are within the allowable
- * bounds, and intentionally skewed as far to the high duty-cycle side as possible
+ * The duty cycle is calculated for a high period of 800 nS.
+ * This is in the middle of the specifications of the WS2812 and WS2812B.
  */
-#define WS2812_DUTYCYCLE_1      (56)
+#define WS2812_DUTYCYCLE_1      (WS2812_PWM_FREQUENCY/(1000000000/800))
 
 /* --- PRIVATE MACROS ------------------------------------------------------- */
 
