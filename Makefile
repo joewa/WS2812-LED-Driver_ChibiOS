@@ -86,7 +86,7 @@ endif
 PROJECT = ch
 
 # Imported source files and paths
-CHIBIOS = ../../../..
+CHIBIOS = ../ChibiOS
 # Startup files.
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 # HAL-OSAL files (optional).
@@ -113,6 +113,7 @@ CSRC = $(STARTUPSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
+       ws2812.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
