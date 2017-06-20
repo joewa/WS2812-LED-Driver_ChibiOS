@@ -31,11 +31,15 @@
 #include "chutil.h"
 
 // TODO: Add these #define's to the headers of your project.
-// May not work with other than this numbers. ws2812_init() should be updated.
+// Pin, timer and dma are all connected, check them all if you change one.
 // Tested with STM32F4, working at 144 or 168 MHz.
-#define WS2812_LED_N    60
-#define WS2812_TIM_N    2
-#define WS2812_TIM_CH   1
+#define WS2812_LED_N    60 // Number of LEDs
+#define PORT_WS2812     GPIOA
+#define PIN_WS2812      1
+#define WS2812_TIM_N    2  // timer, 1-11
+#define WS2812_TIM_CH   1  // timer channel, 0-3
+#define WS2812_DMA_STREAM STM32_DMA1_STREAM1  // DMA stream for TIMx_UP (look up in reference manual under DMA Channel selection)
+#define WS2812_DMA_CHANNEL 3                  // DMA channel for TIMx_UP
 
 /* --- CONFIGURATION CHECK -------------------------------------------------- */
 
@@ -47,16 +51,17 @@
 
 #if !defined(WS2812_TIM_N)
     #error WS2812 timer not specified
-#elif WS2812_TIM_N == 1
-    #define WS2812_DMA_STREAM STM32_DMA1_STREAM5
-#elif WS2812_TIM_N == 2
-    #define WS2812_DMA_STREAM STM32_DMA1_STREAM1 // Joe: War vorher STM32_DMA1_STREAM2
-#elif WS2812_TIM_N == 3
-    #define WS2812_DMA_STREAM STM32_DMA1_STREAM3
-#elif WS2812_TIM_N == 4
-    #define WS2812_DMA_STREAM STM32_DMA1_STREAM7
-#else
-    #error WS2812 timer set to invalid value
+#endif
+#if defined(STM32F2XX) || defined(STM32F4XX) || defined(STM32F7XX)
+    #if WS2812_TIM_N <= 2
+        #define WS2812_AF 1
+    #elif WS2812_TIM_N <= 5
+        #define WS2812_AF 2
+    #elif WS2812_TIM_N <= 11
+        #define WS2812_AF 3
+    #endif
+#elif !defined(WS2812_AF)
+    #error WS2812_AF timer alternate function not specified
 #endif
 
 #if !defined(WS2812_TIM_CH)
@@ -184,14 +189,14 @@ write/read to/from the other buffer).
  */
 
 void ws2812_init(void)
-{ // TODO: Kläre wo der Channel des Streams definiert wird!!!!!
+{
     // Initialize led frame buffer
     uint32_t i;
     for (i = 0; i < WS2812_COLOR_BIT_N; i++) ws2812_frame_buffer[i]                       = WS2812_DUTYCYCLE_0;   // All color bits are zero duty cycle
     for (i = 0; i < WS2812_RESET_BIT_N; i++) ws2812_frame_buffer[i + WS2812_COLOR_BIT_N]  = 0;                    // All reset bits are zero
 
-    // Configure PA0 as AF output
-    palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1)); //palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1)); Nur für TIM1&2? Siehe F4-Datenblatt
+    // Configure pin as AF output
+    palSetPadMode(PORT_WS2812, PIN_WS2812, PAL_MODE_ALTERNATE(WS2812_AF));
 
     // PWM Configuration
     #pragma GCC diagnostic ignored "-Woverride-init"                                        // Turn off override-init warning for this struct. We use the overriding ability to set a "default" channel config
@@ -215,10 +220,9 @@ void ws2812_init(void)
     dmaStreamSetMemory0(WS2812_DMA_STREAM, ws2812_frame_buffer);
     dmaStreamSetTransactionSize(WS2812_DMA_STREAM, WS2812_BIT_N);
     dmaStreamSetMode(WS2812_DMA_STREAM,
-    		STM32_DMA_CR_CHSEL(3) | STM32_DMA_CR_DIR_M2P | STM32_DMA_CR_PSIZE_WORD | STM32_DMA_CR_MSIZE_WORD |
-			STM32_DMA_CR_MINC | STM32_DMA_CR_CIRC | STM32_DMA_CR_PL(3));
-    //CHSEL(3): Select DMA-channel 3 (TIM2_UP); M2P: Memory 2 Periph; PL: Priority Level
-    //TODO: CHSEL should be configured depending on which WS2812_TIM_N is selected
+      STM32_DMA_CR_CHSEL(WS2812_DMA_CHANNEL) | STM32_DMA_CR_DIR_M2P | STM32_DMA_CR_PSIZE_WORD | STM32_DMA_CR_MSIZE_WORD |
+      STM32_DMA_CR_MINC | STM32_DMA_CR_CIRC | STM32_DMA_CR_PL(3));
+    // M2P: Memory 2 Periph; PL: Priority Level
 
     // Start DMA
     dmaStreamEnable(WS2812_DMA_STREAM);
