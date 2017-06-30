@@ -113,11 +113,11 @@
  *
  * Per the datasheet:
  * WS2812:
- * - T0H: 550 nS to 850 nS, inclusive
- * - T0L: 450 nS to 750 nS, inclusive
+ * - T1H: 550 nS to 850 nS, inclusive
+ * - T1L: 450 nS to 750 nS, inclusive
  * WS2812B:
- * - T0H: 750 nS to 1050 nS, inclusive
- * - T0L: 200 nS to 500 nS, inclusive
+ * - T1H: 750 nS to 1050 nS, inclusive
+ * - T1L: 200 nS to 500 nS, inclusive
  *
  * The duty cycle is calculated for a high period of 800 nS.
  * This is in the middle of the specifications of the WS2812 and WS2812B.
