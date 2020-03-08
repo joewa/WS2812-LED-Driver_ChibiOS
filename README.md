@@ -14,6 +14,6 @@ Or [![Join the chat at https://gitter.im/joewa/WS2812-LED-Driver_ChibiOS](https:
 An example project for the STM32F4-Discovery board is included. Connect the LEDs to pin PA1.
 
 Put this directory in the same place as the ChibiOS source tree, so it can be found in ../ChibiOS.
-Tested with ChibiOS 16.1.8.
+Works with ChibiOS 19.1.x. (Use older version for 16.1.x)
 
 - Make sure at least one peripheral that uses DMA is enabled in halconf.h.
