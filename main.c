@@ -37,7 +37,7 @@ int main(void) {
   ws2812_init();
 
   /*
-   * Normal main() thread activity, in this demo it does nothing.
+   * Normal main() thread activity, write LED animation example.
    */
 #define WS2812_LED_N  60
   int s = 0;
