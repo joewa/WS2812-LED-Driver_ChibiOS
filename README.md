@@ -1,10 +1,10 @@
 WS2812-LED-Driver_ChibiOS
 =========================
 
-LED Driver for WS2812B for ChibiOS.
+LED Driver for WS2812B, SK6812, NeoPixel etc. for ChibiOS.
 
 ## Description
-Implements the WS2812-protocol using one DMA-stream and one timer.
+Implements the WS2812-protocol using one DMA-stream and one timer. This requires very little cpu, but has a quite high memory usage of 96 bytes per LED.
 
 ## Status and contribution
 This driver has been tested with STM32F4. Further CPU's Please feel encouraged to fork the repo and finish this work. Any contributions, preferably [Pull Requests](https://github.com/joewa/WS2812-LED-Driver_ChibiOS/pulls) are welcome.

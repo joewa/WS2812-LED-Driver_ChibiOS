@@ -169,7 +169,7 @@
 /**
  * @brief   Determine the index in @ref ws2812_frame_buffer "the frame buffer" of a given green bit
  *
- * @note    The red byte is the first byte in the color packet
+ * @note    The green byte is the first byte in the color packet
  *
  * @param[in] led:                  The led index [0, @ref WS2812_LED_N)
  * @param[in] bit:                  The bit number [0, 7]
@@ -181,7 +181,7 @@
 /**
  * @brief   Determine the index in @ref ws2812_frame_buffer "the frame buffer" of a given blue bit
  *
- * @note    The red byte is the last byte in the color packet
+ * @note    The blue byte is the last byte in the color packet
  *
  * @param[in] led:                  The led index [0, @ref WS2812_LED_N)
  * @param[in] bit:                  The bit index [0, 7]
