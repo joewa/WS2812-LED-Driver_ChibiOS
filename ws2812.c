@@ -40,6 +40,7 @@
 #define WS2812_TIM_CH   1  // timer channel, 0-3
 #define WS2812_DMA_STREAM STM32_DMA_STREAM_ID(1, 1)  // DMA stream for TIMx_UP (look up in reference manual under DMA Channel selection)
 #define WS2812_DMA_CHANNEL 3                  // DMA channel for TIMx_UP
+#define WS2812_COLOR_N  3  // 3 for RGB, 4 for RGBW (e.g. SK6812)
 // The WS2812 expects 5V signal level (or at least 0.7 * VDD). Sometimes it works
 // with a 3V signal level, otherwise the easiest way to get the signal level to 5V
 // is to add an external pullup resistor from the DI pin to 5V (10k will do) and
@@ -89,8 +90,9 @@
  * of zeroes at the end. (50 bits)*(1.25 uS/bit) = 62.5 uS, which gives us some
  * slack in the timing requirements
  */
+#define WS2812_COLOR_BITS       (WS2812_COLOR_N*8)
 #define WS2812_RESET_BIT_N      (50)
-#define WS2812_COLOR_BIT_N      (WS2812_LED_N*24)                           /**< Number of data bits */
+#define WS2812_COLOR_BIT_N      (WS2812_LED_N*WS2812_COLOR_BITS)            /**< Number of data bits */
 #define WS2812_BIT_N            (WS2812_COLOR_BIT_N + WS2812_RESET_BIT_N)   /**< Total number of bits in a frame */
 
 /**
@@ -152,7 +154,7 @@
  *
  * @return                          The bit index
  */
-#define WS2812_BIT(led, byte, bit)          (24*(led) + 8*(byte) + (7 - (bit)))
+#define WS2812_BIT(led, byte, bit)          (WS2812_COLOR_BITS*(led) + 8*(byte) + (7 - (bit)))
 
 /**
  * @brief   Determine the index in @ref ws2812_frame_buffer "the frame buffer" of a given red bit
@@ -189,6 +191,18 @@
  * @return                          The bit index
  */
 #define WS2812_BLUE_BIT(led, bit)           WS2812_BIT((led), 2, (bit))
+
+/**
+ * @brief   Determine the index in @ref ws2812_frame_buffer "the frame buffer" of a given white bit
+ *
+ * @note    The white byte is the last byte in the color packet
+ *
+ * @param[in] led:                  The led index [0, @ref WS2812_LED_N)
+ * @param[in] bit:                  The bit index [0, 7]
+ *
+ * @return                          The bit index
+ */
+#define WS2812_WHITE_BIT(led, bit)           WS2812_BIT((led), 3, (bit))
 
 /* --- PRIVATE VARIABLES ---------------------------------------------------- */
 
@@ -263,6 +277,26 @@ ws2812_err_t ws2812_write_led(uint32_t led_number, uint8_t r, uint8_t g, uint8_t
         ws2812_frame_buffer[WS2812_RED_BIT(led_number, bit)]      = ((r >> bit) & 0x01) ? WS2812_DUTYCYCLE_1 : WS2812_DUTYCYCLE_0;
         ws2812_frame_buffer[WS2812_GREEN_BIT(led_number, bit)]    = ((g >> bit) & 0x01) ? WS2812_DUTYCYCLE_1 : WS2812_DUTYCYCLE_0;
         ws2812_frame_buffer[WS2812_BLUE_BIT(led_number, bit)]     = ((b >> bit) & 0x01) ? WS2812_DUTYCYCLE_1 : WS2812_DUTYCYCLE_0;
+    }
+
+    // Success
+    return WS2812_SUCCESS;
+}
+
+ws2812_err_t ws2812_write_led_rgbw(uint32_t led_number, uint8_t r, uint8_t g, uint8_t b, uint8_t w)
+{
+    // Check for valid LED
+    if (led_number >= WS2812_LED_N) return WS2812_LED_INVALID;
+
+    // Write color to frame buffer
+    uint32_t bit;
+    for (bit = 0; bit < 8; bit++) {
+        ws2812_frame_buffer[WS2812_RED_BIT(led_number, bit)]      = ((r >> bit) & 0x01) ? WS2812_DUTYCYCLE_1 : WS2812_DUTYCYCLE_0;
+        ws2812_frame_buffer[WS2812_GREEN_BIT(led_number, bit)]    = ((g >> bit) & 0x01) ? WS2812_DUTYCYCLE_1 : WS2812_DUTYCYCLE_0;
+        ws2812_frame_buffer[WS2812_BLUE_BIT(led_number, bit)]     = ((b >> bit) & 0x01) ? WS2812_DUTYCYCLE_1 : WS2812_DUTYCYCLE_0;
+#if WS2812_COLOR_N >= 4
+        ws2812_frame_buffer[WS2812_WHITE_BIT(led_number, bit)]    = ((w >> bit) & 0x01) ? WS2812_DUTYCYCLE_1 : WS2812_DUTYCYCLE_0;
+#endif
     }
 
     // Success

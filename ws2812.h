@@ -70,6 +70,27 @@ void ws2812_init(void);
  */
 ws2812_err_t ws2812_write_led(uint32_t led_number, uint8_t r, uint8_t g, uint8_t b);
 
+/**
+ * @brief   Write the value of a single LED in the chain
+ *
+ * The color value is written to a frame buffer, and will not
+ * be updated until the next frame is written. Frames are written
+ * at the maximum possible speed -- the longest latency between a
+ * call to this function and the value being displayed is
+ * 1.25uS*(32*@ref WS2812_LED_N + 50)
+ *
+ * @param[in] led_number:           The index of the LED to be written. Must be strictly less than
+ *                                  @ref WS2812_N_LEDS
+ * @param[in] r:                    The red level of the LED
+ * @param[in] g:                    The green level of the LED
+ * @param[in] b:                    The blue level of the LED
+ * @param[in] w:                    The white level of the LED
+ *
+ * @retval WS2812_SUCCESS:          The write was successful
+ * @retval WS2812_LED_INVALID:      The write was to an invalid LED index
+ */
+ws2812_err_t ws2812_write_led_rgbw(uint32_t led_number, uint8_t r, uint8_t g, uint8_t b, uint8_t w);
+
 /** @} defgroup WS2812 */
 
 #endif //ifndef WS2812_H_
