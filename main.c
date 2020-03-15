@@ -37,18 +37,37 @@ int main(void) {
   ws2812_init();
 
   /*
-   * Normal main() thread activity, in this demo it does nothing.
+   * Normal main() thread activity, LED animation example.
    */
 #define WS2812_LED_N  60
   int s = 0;
+  uint8_t r, b, g;
   while (true) {
     if (palReadPad(GPIOA, GPIOA_BUTTON)) {
     }
     for (int n = 0; n < WS2812_LED_N; n++) {
-      int s0 = s + 10*n;
-      ws2812_write_led(n, s0%255, (s0+85)%255, (s0+170)%255);
+      // colorwheel function
+      int position = (s + 5*n) % 100;
+      switch (position >> 5) {
+      case 0:
+        r = 31 - position % 32; // Red down
+        g = position % 32;      // Green up
+        b = 0;                  // blue off
+        break;
+      case 1:
+        g = 31 - position % 32; // green down
+        b = position % 32;      // blue up
+        r = 0;                  // red off
+        break;
+      case 2:
+        b = 31 - position % 32; // blue down
+        r = position % 32;      // red up
+        g = 0;                  // green off
+        break;
+      }
+      ws2812_write_led(n, r, g, b);
     }
-    s += 10;
+    s += 3;
     chThdSleepMilliseconds(50);
     palTogglePad(GPIOD, GPIOD_LED3);
   }

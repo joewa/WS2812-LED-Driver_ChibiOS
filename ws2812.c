@@ -38,13 +38,13 @@
 #define PIN_WS2812      1
 #define WS2812_TIM_N    2  // timer, 1-11
 #define WS2812_TIM_CH   1  // timer channel, 0-3
-#define WS2812_DMA_STREAM STM32_DMA1_STREAM1  // DMA stream for TIMx_UP (look up in reference manual under DMA Channel selection)
+#define WS2812_DMA_STREAM STM32_DMA_STREAM_ID(1, 1)  // DMA stream for TIMx_UP (look up in reference manual under DMA Channel selection)
 #define WS2812_DMA_CHANNEL 3                  // DMA channel for TIMx_UP
 // The WS2812 expects 5V signal level (or at least 0.7 * VDD). Sometimes it works
 // with a 3V signal level, otherwise the easiest way to get the signal level to 5V
 // is to add an external pullup resistor from the DI pin to 5V (10k will do) and
 // configure the pin as open drain.
-// (An SMD resistor is easily solders on the connections of a light strip)
+// (An SMD resistor is easily soldered on the connections of a light strip)
 // Uncomment the next line if an external pullup resistor is used.
 //#define WS2812_EXTERNAL_PULLUP
 
@@ -103,6 +103,9 @@
  * WS2812B:
  * - T0H: 200 nS to 500 nS, inclusive
  * - T0L: 750 nS to 1050 nS, inclusive
+ * SK6812:
+ * - T0H: 150 nS to 450 nS, inclusive
+ * - T0L: 750 nS to 1050 nS, inclusive
  *
  * The duty cycle is calculated for a high period of 350 nS.
  */
@@ -118,6 +121,9 @@
  * WS2812B:
  * - T1H: 750 nS to 1050 nS, inclusive
  * - T1L: 200 nS to 500 nS, inclusive
+ * SK6812:
+ * - T1H: 450 nS to 750 nS, inclusive
+ * - T1L: 450 nS to 750 nS, inclusive
  *
  * The duty cycle is calculated for a high period of 800 nS.
  * This is in the middle of the specifications of the WS2812 and WS2812B.
@@ -163,7 +169,7 @@
 /**
  * @brief   Determine the index in @ref ws2812_frame_buffer "the frame buffer" of a given green bit
  *
- * @note    The red byte is the first byte in the color packet
+ * @note    The green byte is the first byte in the color packet
  *
  * @param[in] led:                  The led index [0, @ref WS2812_LED_N)
  * @param[in] bit:                  The bit number [0, 7]
@@ -175,7 +181,7 @@
 /**
  * @brief   Determine the index in @ref ws2812_frame_buffer "the frame buffer" of a given blue bit
  *
- * @note    The red byte is the last byte in the color packet
+ * @note    The blue byte is the last byte in the color packet
  *
  * @param[in] led:                  The led index [0, @ref WS2812_LED_N)
  * @param[in] bit:                  The bit index [0, 7]
@@ -226,17 +232,17 @@ void ws2812_init(void)
 
     // Configure DMA
     //dmaInit(); // Joe added this
-    dmaStreamAllocate(WS2812_DMA_STREAM, 10, NULL, NULL);
-    dmaStreamSetPeripheral(WS2812_DMA_STREAM, &(WS2812_PWMD.tim->CCR[WS2812_TIM_CH]));  // Ziel ist der An-Zeit im Cap-Comp-Register
-    dmaStreamSetMemory0(WS2812_DMA_STREAM, ws2812_frame_buffer);
-    dmaStreamSetTransactionSize(WS2812_DMA_STREAM, WS2812_BIT_N);
-    dmaStreamSetMode(WS2812_DMA_STREAM,
+    const stm32_dma_stream_t* dma = dmaStreamAlloc(WS2812_DMA_STREAM, 10, NULL, NULL);
+    dmaStreamSetPeripheral(dma, &(WS2812_PWMD.tim->CCR[WS2812_TIM_CH]));  // Ziel ist der An-Zeit im Cap-Comp-Register
+    dmaStreamSetMemory0(dma, ws2812_frame_buffer);
+    dmaStreamSetTransactionSize(dma, WS2812_BIT_N);
+    dmaStreamSetMode(dma,
       STM32_DMA_CR_CHSEL(WS2812_DMA_CHANNEL) | STM32_DMA_CR_DIR_M2P | STM32_DMA_CR_PSIZE_WORD | STM32_DMA_CR_MSIZE_WORD |
       STM32_DMA_CR_MINC | STM32_DMA_CR_CIRC | STM32_DMA_CR_PL(3));
     // M2P: Memory 2 Periph; PL: Priority Level
 
     // Start DMA
-    dmaStreamEnable(WS2812_DMA_STREAM);
+    dmaStreamEnable(dma);
 
     // Configure PWM
     // NOTE: It's required that preload be enabled on the timer channel CCR register. This is currently enabled in the
